@@ -27,9 +27,6 @@ def button():
         time.sleep(0.2)
         input_state = GPIO.input(12)
         if input_state == False:
-            la.lcd_clear()
-            la.lcd_display_string("Saving...", 1)
-            time.sleep(0.2)
             watchdog = False
             break
 
@@ -44,13 +41,20 @@ def rec(block):
     la.lcd_display_string("Sniffing - Press", 1)
     la.lcd_display_string("save to end", 2)
     l = 0
-    for plen, t, buf in sniff("br0", out_file="../pcap.pcap"):  # Here is where the magic happens!
+    for plen, t, buf in sniff("br0", out_file="/mnt/pcap.pcap"):  # Here is where the magic happens!
         l = l+1
         if watchdog == False:                                   # If the button is pressed, the watchdog breaks the for() loop
             la.lcd_clear()
-            la.lcd_display_string("Remove USB", 1)
-            la.lcd_display_string(str(l) + " packets", 2)
+            time.sleep(1)
+            la.lcd_clear()
             break
+    
+    la.lcd_clear()
+    la.lcd_display_string("Saving...", 1)
+    subprocess.run(["umount", "/mnt"])
+    la.lcd_clear()
+    la.lcd_display_string("Remove USB", 2)
+    la.lcd_display_string(str(l) + " Packets", 1)
 
 
 la = I2C_LCD_driver.lcd()                                       # Display Declaration
@@ -74,7 +78,9 @@ monitor.start()
 
 # Waits for USB insertion
 for device in iter(monitor.poll, None):
+    time.sleep(0.2)
     if device.sys_path[-3:].isalpha():
+        # USB inserted
         if device.action == 'add':
             # If USB is inserted opens a new thread of the rec() function
             t0 = threading.Thread(name='t0', target=rec, args=(device.sys_path[-3:],))
@@ -83,4 +89,9 @@ for device in iter(monitor.poll, None):
             # Opens thread for the button() function
             t1 = threading.Thread(name='t1', target=button)
             t1.start()
-            break
+
+        # USB removed
+        if device.action == 'remove':
+            la.lcd_clear()
+            la.lcd_display_string("Insert USB to", 1)
+            la.lcd_display_string("start recording!", 2)
