@@ -1,4 +1,4 @@
 echo "-- Adding to Github --"
 git add .
 git commit -am "upload"
-git push origin master
+git push origin main
