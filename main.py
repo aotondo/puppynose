@@ -69,8 +69,8 @@ la = I2C_LCD_driver.lcd()                                                   # Di
 
 # Welcome message
 la.lcd_clear()
-la.lcd_display_string("Puppynose v0.1", 1)
-la.lcd_display_string(" ", 2)
+la.lcd_display_string(" Puppynose v0.1", 1)
+la.lcd_display_string(" --------------", 2)
 time.sleep(2)
 
 # Ready message
