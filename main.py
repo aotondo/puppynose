@@ -14,7 +14,6 @@ from pylibpcap.pcap import sniff
 # Functions
 # Button action
 def button():
-    print("BUTTON loaded")
     # Button declaration
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -36,19 +35,15 @@ def button():
 # Mounts USB and sniffs br0 bridge
 def rec(block):
     la.lcd_clear()
-    la.lcd_display_string("USB Inserted", 1)
-    la.lcd_display_string(block, 2)
-
+    la.lcd_display_string("USB Inserted!", 1)
+    time.sleep(1)
+    
     # Mount USB
     os.system("mount /dev/"+ block +"1 /mnt")
-
+    la.lcd_display_string("USB Inserted!", 1)
     for plen, t, buf in sniff("br0", out_file="pcap.pcap"):
-        os.system("clear")
-        print("[+]: Payload len=", plen)
-        print("[+]: Time", t)
-        print("[+]: Payload", buf)
-    # Runs TcpDump
-    # os.system("")
+        if watchdog == False:   # If the button is pressed, the watchdog makes break the for loop 
+            break
 
 # Display Declaration
 la = I2C_LCD_driver.lcd()
