@@ -23,34 +23,37 @@ def button():
     global watchdog
     watchdog = True
 
-    while True:                                            # Waits the button to be pressed
+    while True:                                                # Waits the button to be pressed
         time.sleep(0.2)
         input_state = GPIO.input(12)
         if input_state == False:
-            print("BUTTON pressed")
-            watchdog = False
             la.lcd_clear()
             la.lcd_display_string("Saving...", 1)
             time.sleep(0.2)
+            watchdog = False
+            break
 
 # Mounts USB and sniffs br0 bridge
 def rec(block):
     la.lcd_clear()
-    la.lcd_display_string("USB Inserted!", 1)
+    la.lcd_display_string("USB Inserted", 1)
     time.sleep(1)
 
     # Mount USB
-    os.system("mount /dev/"+ block +"1 /mnt")               # Mounts the USB
-    la.lcd_display_string("Sniffing traffic...", 1)
-
-    for plen, t, buf in sniff("br0", out_file="pcap.pcap"): # Here is where the magic happens!
-        
-        if watchdog == False:                               # If the button is pressed, the watchdog breaks the for() loop 
+    os.system("mount /dev/"+ block +"1 /mnt")                   # Mounts the USB
+    la.lcd_display_string("Sniffing - Press", 1)
+    la.lcd_display_string("save to end", 2)
+    l = 0
+    for plen, t, buf in sniff("br0", out_file="../pcap.pcap"):  # Here is where the magic happens!
+        l = l+1
+        if watchdog == False:                                   # If the button is pressed, the watchdog breaks the for() loop
+            la.lcd_clear()
             la.lcd_display_string("Remove USB", 1)
+            la.lcd_display_string(str(l) + " packets", 2)
             break
 
-# Display Declaration
-la = I2C_LCD_driver.lcd()
+
+la = I2C_LCD_driver.lcd()                                       # Display Declaration
 
 # Welcome message
 la.lcd_clear()
@@ -81,4 +84,3 @@ for device in iter(monitor.poll, None):
             t1 = threading.Thread(name='t1', target=button)
             t1.start()
             break
-            
