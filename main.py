@@ -23,26 +23,30 @@ def button():
     global watchdog
     watchdog = True
 
-    while True:
+    while True:                                            # Waits the button to be pressed
         time.sleep(0.2)
         input_state = GPIO.input(12)
         if input_state == False:
             print("BUTTON pressed")
             watchdog = False
-            la.lcd_display_string("BUTTON", 1)
-            break
+            la.lcd_clear()
+            la.lcd_display_string("Saving...", 1)
+            time.sleep(0.2)
 
 # Mounts USB and sniffs br0 bridge
 def rec(block):
     la.lcd_clear()
     la.lcd_display_string("USB Inserted!", 1)
     time.sleep(1)
-    
+
     # Mount USB
-    os.system("mount /dev/"+ block +"1 /mnt")
-    la.lcd_display_string("USB Inserted!", 1)
-    for plen, t, buf in sniff("br0", out_file="pcap.pcap"):
-        if watchdog == False:   # If the button is pressed, the watchdog makes break the for loop 
+    os.system("mount /dev/"+ block +"1 /mnt")               # Mounts the USB
+    la.lcd_display_string("Sniffing traffic...", 1)
+
+    for plen, t, buf in sniff("br0", out_file="pcap.pcap"): # Here is where the magic happens!
+        
+        if watchdog == False:                               # If the button is pressed, the watchdog breaks the for() loop 
+            la.lcd_display_string("Remove USB", 1)
             break
 
 # Display Declaration
@@ -56,8 +60,8 @@ time.sleep(2)
 
 # Ready message
 la.lcd_clear()
-la.lcd_display_string("Insert USB and", 1)
-la.lcd_display_string("press REC", 2)
+la.lcd_display_string("Insert USB to", 1)
+la.lcd_display_string("start recording!", 2)
 
 # Declaration of pyudev for USB detection
 context = pyudev.Context()
