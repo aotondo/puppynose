@@ -12,6 +12,7 @@ import I2C_LCD_driver
 from pylibpcap.pcap import sniff
 import random
 import string
+import signal
 
 # Functions
 # Generates the ID of the packet
@@ -33,6 +34,7 @@ def button():
         time.sleep(0.2)
         input_state = GPIO.input(12)
         if input_state == False:
+            print("asdf")
             watchdog = False
             break
 
@@ -42,27 +44,28 @@ def rec(block):
     la.lcd_display_string("USB Inserted", 1)
     time.sleep(1)
     # Mount USB
-    os.system("mount /dev/"+ block +"1 /mnt")                               # Mounts the USB
+    #os.system("mount /dev/"+ block +"1 /mnt")                               # Mounts the USB
+    subprocess.run(["mount", "/dev/"+ block +"1", "/mnt"])
+
     la.lcd_clear()                               
     la.lcd_display_string("Sniffing...", 1)
     la.lcd_display_string("Use END to save", 2)
     l = 0                                                                   # Counts the number of packets sniffed
     packetid = id_generator()                                               # Generates the ID of the PCAP file
 	
-    for plen, t, buf in sniff("br0", out_file="/mnt/puppynose-"+ packetid +".pcap"):  # Here is where the magic happens!
-        l = l+1
+    #for plen, t, buf in sniff("br0", out_file="/mnt/puppynose-"+ packetid +".pcap"):  # Here is where the magic happens!
+    tcpdump = subprocess.Popen("tcpdump -i br0 -w puppynose-"+ packetid +".pcap", shell=True)
+    #    l = l+1
+    while True:
         if watchdog == False:                                               # If the button is pressed, the watchdog breaks the for() loop
             la.lcd_clear()
-            time.sleep(1)
+            la.lcd_display_string("Saving...", 1)
+            os.kill(tcpdump.pid, signal.SIGINT)                                    # Sends a CTRL-Z signal to the tcpdump process
+            subprocess.run(["umount", "/mnt"])
             la.lcd_clear()
+            la.lcd_display_string("Done - ID:" + packetid, 1)
             break
-    
-    la.lcd_clear()
-    la.lcd_display_string("Saving...", 1)
-    subprocess.run(["umount", "/mnt"])
-    la.lcd_clear()
-    la.lcd_display_string("Done - ID:" + packetid, 1)
-    la.lcd_display_string(str(l) + " Packets", 2)
+        #la.lcd_display_string(str(l) + " Packets", 2)
 
 
 la = I2C_LCD_driver.lcd()                                                   # Display Declaration
